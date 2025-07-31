@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace PokemonTCGOrganizer.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(PokemonDbContext))]
     [Migration("20250731155440_InitialCreate")]
     partial class InitialCreate
     {

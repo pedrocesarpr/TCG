@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<PokemonDbContext>(options =>
     options.UseSqlite("Data Source=pokemoncards.db"));
 builder.Services.AddScoped<CardScraper>();
 

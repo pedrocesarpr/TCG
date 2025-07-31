@@ -39,16 +39,16 @@ public class CardScraper
                 var setDoc = new HtmlDocument();
                 setDoc.LoadHtml(setHtml);
 
-                var setNameNode = setDoc.DocumentNode.SelectSingleNode("//h1[contains(@class, 'page-title')]");
+                var setNameNode = setDoc.GetElementbyId("card-search-result-title-set-like-name");//setDoc.DocumentNode.SelectSingleNode("//h1[contains(@class, 'page-title')]");
                 var setName = setNameNode?.InnerText.Trim() ?? "Unknown";
 
-                var cardNodes = setDoc.DocumentNode.SelectNodes("//a[contains(@class, 'card-list-item')]");
+                var cardNodes = setDoc.DocumentNode.SelectNodes("//a[contains(@class, 'card-image-grid-item-link')]");
                 if (cardNodes == null) continue;
 
                 foreach (var node in cardNodes)
                 {
-                    var id = node.SelectSingleNode(".//div[contains(@class,'number')]")?.InnerText.Trim();
-                    var name = node.SelectSingleNode(".//div[contains(@class,'name')]")?.InnerText.Trim();
+                    var id = node.SelectSingleNode(".//span[contains(@class,'card-image-grid-item-info-overlay-text-part')]")?.InnerText.Trim();
+                    var name = node.SelectSingleNode(".//div[contains(@class,'card-image-grid-item-card-title')]")?.InnerText.Trim();
                     var img = node.SelectSingleNode(".//img")?.GetAttributeValue("src", null);
 
                     if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(name))
