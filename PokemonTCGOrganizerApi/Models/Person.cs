@@ -5,5 +5,5 @@
 
     // Relação com Decks e Cartas
     public ICollection<Deck> Decks { get; set; }
-    public ICollection<CardOwnership> OwnedCards { get; set; }
+    public ICollection<PersonCard> OwnedCards { get; set; }
 }

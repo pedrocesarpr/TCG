@@ -1,9 +1,9 @@
-﻿public class CardOwnership
+﻿public class PersonCard
 {
     public int Id { get; set; }
 
-    public int OwnerId { get; set; }
-    public Person Owner { get; set; } = null!;
+    public int PersonId { get; set; }
+    public Person Person { get; set; } = null!;
 
     public int PokemonCardId { get; set; }
     public PokemonCard PokemonCard { get; set; } = null!;

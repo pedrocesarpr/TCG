@@ -6,7 +6,7 @@ public class PokemonDbContext : DbContext
 
     public DbSet<PokemonCard> PokemonCards { get; set; }
     public DbSet<Person> People { get; set; }
-    public DbSet<CardOwnership> CardOwnerships { get; set; }
+    public DbSet<PersonCard> PersonCards { get; set; }
     public DbSet<Deck> Decks { get; set; }
     public DbSet<DeckCard> DeckCards { get; set; }
 
@@ -28,11 +28,11 @@ public class PokemonDbContext : DbContext
             .HasForeignKey(dc => dc.PokemonCardId);
 
         modelBuilder.Entity<Person>().HasMany(p => p.Decks).WithOne(d => d.Owner);
-        modelBuilder.Entity<Person>().HasMany(p => p.OwnedCards).WithOne(oc => oc.Owner);
+        modelBuilder.Entity<Person>().HasMany(p => p.OwnedCards).WithOne(oc => oc.Person);
 
         // Chave composta para OwnedCard
-        modelBuilder.Entity<CardOwnership>()
-            .HasKey(oc => new { oc.PokemonCardId, oc.OwnerId });
+        modelBuilder.Entity<PersonCard>()
+            .HasKey(oc => new { oc.PokemonCardId, oc.PersonId });
 
         base.OnModelCreating(modelBuilder);
     }
