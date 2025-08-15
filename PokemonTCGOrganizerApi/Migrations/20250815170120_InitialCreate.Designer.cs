@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace PokemonTCGOrganizer.Migrations
 {
     [DbContext(typeof(PokemonDbContext))]
-    [Migration("20250801152515_RenamePersonCards")]
-    partial class RenamePersonCards
+    [Migration("20250815170120_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -113,16 +113,43 @@ namespace PokemonTCGOrganizer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("CardName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Printing")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SetCode")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SetName")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("TradeQuantity")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

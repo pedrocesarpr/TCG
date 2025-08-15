@@ -20,11 +20,13 @@ public class PersonController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Person person)
+    public async Task<IActionResult> Create(PersonDto person)
     {
-        _context.People.Add(person);
+        Person item = new Person();
+        item.Name = person.Name;
+        _context.People.Add(item);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = person.Id }, person);
+        return CreatedAtAction(nameof(Get), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]

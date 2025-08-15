@@ -41,7 +41,8 @@ public class CardScraper
 
                 var setNameNode = setDoc.GetElementbyId("card-search-result-title-set-like-name");//setDoc.DocumentNode.SelectSingleNode("//h1[contains(@class, 'page-title')]");
                 var setName = setNameNode?.InnerText.Trim() ?? "Unknown";
-
+                var setCodeNode = setDoc.GetElementbyId("card-search-result-title-set-code");
+                var setCode = setCodeNode?.InnerText.Trim() ?? "Unknown";               
                 var cardNodes = setDoc.DocumentNode.SelectNodes("//a[contains(@class, 'card-image-grid-item-link')]");
                 if (cardNodes == null) continue;
 
@@ -55,9 +56,11 @@ public class CardScraper
                     {
                         allCards.Add(new PokemonCard
                         {
-                            CardId = id,
-                            Name = name,
+                            CardName = name,
+                            SetCode = setCode,
                             SetName = setName,
+                            CardNumber = id.Split('/')[0],
+                            CardId = id,
                             ImageUrl = img
                         });
                     }

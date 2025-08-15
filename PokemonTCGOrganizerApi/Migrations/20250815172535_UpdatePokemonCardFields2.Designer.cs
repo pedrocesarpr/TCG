@@ -9,39 +9,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace PokemonTCGOrganizer.Migrations
 {
     [DbContext(typeof(PokemonDbContext))]
-    [Migration("20250731215215_AddDecks")]
-    partial class AddDecks
+    [Migration("20250815172535_UpdatePokemonCardFields2")]
+    partial class UpdatePokemonCardFields2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.2");
-
-            modelBuilder.Entity("CardOwnership", b =>
-                {
-                    b.Property<int>("PokemonCardId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PersonId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("PurchasedBy")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PokemonCardId", "PersonId");
-
-                    b.HasIndex("PersonId");
-
-                    b.ToTable("CardOwnerships");
-                });
 
             modelBuilder.Entity("Deck", b =>
                 {
@@ -53,11 +28,12 @@ namespace PokemonTCGOrganizer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("OwnerName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("Decks");
                 });
@@ -102,6 +78,43 @@ namespace PokemonTCGOrganizer.Migrations
                     b.ToTable("People");
                 });
 
+            modelBuilder.Entity("PersonCard", b =>
+                {
+                    b.Property<int>("PokemonCardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Printing")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PurchasedBy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("PokemonCardId", "PersonId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("PersonCards");
+                });
+
             modelBuilder.Entity("PokemonCard", b =>
                 {
                     b.Property<int>("Id")
@@ -112,10 +125,19 @@ namespace PokemonTCGOrganizer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("CardName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SetCode")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -128,23 +150,15 @@ namespace PokemonTCGOrganizer.Migrations
                     b.ToTable("PokemonCards");
                 });
 
-            modelBuilder.Entity("CardOwnership", b =>
+            modelBuilder.Entity("Deck", b =>
                 {
-                    b.HasOne("Person", "Person")
-                        .WithMany("CardsOwned")
-                        .HasForeignKey("PersonId")
+                    b.HasOne("Person", "Owner")
+                        .WithMany("Decks")
+                        .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PokemonCard", "PokemonCard")
-                        .WithMany()
-                        .HasForeignKey("PokemonCardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Person");
-
-                    b.Navigation("PokemonCard");
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("DeckCard", b =>
@@ -166,6 +180,25 @@ namespace PokemonTCGOrganizer.Migrations
                     b.Navigation("PokemonCard");
                 });
 
+            modelBuilder.Entity("PersonCard", b =>
+                {
+                    b.HasOne("Person", "Person")
+                        .WithMany("OwnedCards")
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PokemonCard", "PokemonCard")
+                        .WithMany()
+                        .HasForeignKey("PokemonCardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Person");
+
+                    b.Navigation("PokemonCard");
+                });
+
             modelBuilder.Entity("Deck", b =>
                 {
                     b.Navigation("Cards");
@@ -173,7 +206,9 @@ namespace PokemonTCGOrganizer.Migrations
 
             modelBuilder.Entity("Person", b =>
                 {
-                    b.Navigation("CardsOwned");
+                    b.Navigation("Decks");
+
+                    b.Navigation("OwnedCards");
                 });
 #pragma warning restore 612, 618
         }

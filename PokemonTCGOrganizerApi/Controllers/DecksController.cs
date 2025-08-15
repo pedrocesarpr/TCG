@@ -44,7 +44,7 @@ public class DecksController : ControllerBase
             var card = await _context.PokemonCards
                 .FirstOrDefaultAsync(c =>
                     c.CardId.StartsWith(number + "/") &&
-                    c.Name.ToLower().Contains(name.ToLower()));
+                    c.CardName.ToLower().Contains(name.ToLower()));
 
             if (card == null)
             {
@@ -88,7 +88,7 @@ public class DecksController : ControllerBase
                 c.Quantity,
                 c.Category,
                 CardId = c.PokemonCard.CardId,
-                CardName = c.PokemonCard.Name,
+                CardName = c.PokemonCard.CardName,
                 SetName = c.PokemonCard.SetName,
                 ImageUrl = c.PokemonCard.ImageUrl
             })
@@ -143,7 +143,7 @@ public class DecksController : ControllerBase
             var card = await _context.PokemonCards
                 .FirstOrDefaultAsync(c =>
                     c.CardId.StartsWith(number + "/") &&
-                    c.Name.ToLower().Contains(name.ToLower()));
+                    c.CardName.ToLower().Contains(name.ToLower()));
 
             if (card == null)
             {
@@ -254,7 +254,7 @@ public class DecksController : ControllerBase
 
             result.Add(new
             {
-                deckCard.PokemonCard.Name,
+                deckCard.PokemonCard.CardName,
                 deckCard.PokemonCard.CardId,
                 deckCard.PokemonCard.SetName,
                 Required = required,

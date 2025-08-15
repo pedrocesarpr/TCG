@@ -7,7 +7,9 @@
 
     public int PokemonCardId { get; set; }
     public PokemonCard PokemonCard { get; set; } = null!;
-
+    public string Condition { get; set; }
+    public string Printing { get; set; }
+    public string Language { get; set; }
     public int Quantity { get; set; }
     public string PurchasedBy { get; set; } = null!; // nome de quem comprou originalmente
 }
