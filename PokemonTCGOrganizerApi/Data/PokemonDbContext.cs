@@ -17,11 +17,12 @@ public class PokemonDbContext : DbContext
             var basePath = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
             var dbPath = Path.Combine(basePath, "Data", "pokemon.db");
 
-            optionsBuilder.UseSqlite($"Data Source={dbPath}");
+            optionsBuilder.UseSqlite($"Data Source={dbPath}").EnableSensitiveDataLogging();
         }
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        
         // Chave composta para DeckCard
         modelBuilder.Entity<DeckCard>()
             .HasKey(dc => new { dc.DeckId, dc.PokemonCardId });
@@ -42,7 +43,7 @@ public class PokemonDbContext : DbContext
 
         // Chave composta para OwnedCard
         modelBuilder.Entity<PersonCard>()
-            .HasKey(oc => new { oc.PokemonCardId, oc.PersonId });
-     
+             .HasKey(pc => new { pc.PersonId, pc.PokemonCardId, pc.Printing, pc.Language });
+
     }
 }

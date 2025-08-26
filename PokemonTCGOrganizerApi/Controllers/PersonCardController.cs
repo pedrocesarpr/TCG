@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -47,86 +50,149 @@ public class PersonCardController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
-    [HttpPost("{personId}/import-csv")]
+
+    [HttpPost("import-csv/{personId}")]
     public async Task<IActionResult> ImportCsv(int personId, IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("Arquivo CSV não fornecido.");
+            return BadRequest("Arquivo CSV inválido.");
 
-        using var stream = new StreamReader(file.OpenReadStream());
-        bool firstLine = true;
+        using var reader = new StreamReader(file.OpenReadStream());
+        var allCards = await _context.PokemonCards.ToListAsync();
+
+        // Criar dicionário de cartas com chave (SetCode, CardNumber, primeiros 5 chars do nome)
+        var cardDict = allCards
+            .GroupBy(c => (
+                c.SetCode.Trim(),
+                c.CardNumber.Trim(),
+                c.CardName.Substring(0, Math.Min(5, c.CardName.Length)).Trim().ToUpper()
+            ))
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var person = await _context.People.FindAsync(personId);
+        if (person == null)
+            return NotFound("Pessoa não encontrada.");
+
+        var errors = new List<string>();
+        var lineNumber = 0;
         var personCards = new List<PersonCard>();
 
-        while (!stream.EndOfStream)
+        while (!reader.EndOfStream)
         {
-            var line = await stream.ReadLineAsync();
+            var line = await reader.ReadLineAsync();
+            lineNumber++;
 
-            if (firstLine && line.StartsWith("sep="))
+            if (lineNumber == 1) continue; // linha sep=,
+            if (lineNumber == 2) continue; // cabeçalho
+
+            var values = line.Split(',');
+
+            if (values.Length < 10)
             {
-                firstLine = false;
+                errors.Add($"Linha {lineNumber} inválida: {line}");
                 continue;
             }
-            firstLine = false;
+            
+            var folderName = values[0].Trim();
+            var quantity = int.TryParse(values[1], out var q) ? q : 0;
+            var tradeQty = int.TryParse(values[2], out var tq) ? tq : 0;
+            var cardName = values[3].Trim()
+                .Replace("’", "'")
+                .Replace("\"", "");
+            
 
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+            var setCode = values[4].Trim().Replace("1","I");
+            if (setCode.Contains("-"))
+                setCode = setCode.Split('-')[0].Trim();
+            var setName = values[5].Trim();
+            var cardNumber = values[6].Trim();
+            if (cardNumber.Contains("/"))
+                cardNumber = cardNumber.Split('/')[0].Trim();
+            var condition = values[7].Trim();
+            var printing = values[8].Trim();
+            var language = values[9].Trim();
+            var purchasedBy = folderName; // usei Folder Name como "quem comprou"
 
-            var fields = ParseCsvLine(line);
-            if (fields.Length < 12) continue; // Linha inválida
+            // 🔑 Criar chave única (SetCode, CardNumber, 5 primeiros chars do nome)
+            var key = (
+                setCode,
+                cardNumber,
+                cardName.Substring(0, Math.Min(5, cardName.Length)).Trim().ToUpper()
+            );
 
-            var quantity = int.Parse(fields[1]);
-            var cardName = fields[3];
-            var setCode = fields[4];
-            var cardNumber = fields[6];
-            var condition = fields[7];
-            var printing = fields[8];
-            var language = fields[9];
-           
-            // Busca a carta no banco
-            var card = await _context.PokemonCards.FirstOrDefaultAsync(c =>
-                c.CardNumber == cardNumber &&
-                c.SetCode == setCode);
-            var person = await _context.People.FirstOrDefaultAsync(c =>
-                c.Id == personId);
-
-            if (card == null) continue;
-
-            var personCard = new PersonCard
+            if (!cardDict.TryGetValue(key, out var card))
             {
-                PersonId = personId,
-                PokemonCardId = card.Id,
-                Quantity = quantity,
-                Condition = condition,
-                Printing = printing,
-                Language = language,
-                PurchasedBy = person?.Name ?? ""
-            };
+                errors.Add($"Linha {lineNumber}: Carta não encontrada {setCode}-{cardNumber} ({cardName})");
+                continue;
+            }
 
-            personCards.Add(personCard);
+            // Procurar se já existe registro para a pessoa + carta + condition + language
+            var existing = await _context.PersonCards
+                .FirstOrDefaultAsync(pc =>
+                    pc.PersonId == personId &&
+                    pc.PokemonCardId == card.Id &&
+                    pc.Printing == printing &&
+                    pc.Language == language
+                );
+
+            if (existing != null)
+            {
+                // Atualiza quantidade
+                existing.Quantity += quantity;
+            }
+            else
+            {
+                // Adiciona novo registro
+                var personCard = new PersonCard
+                {
+                    PersonId = personId,
+                    PokemonCardId = card.Id,
+                    Condition = condition,
+                    Printing = printing,
+                    Language = language,
+                    Quantity = quantity,
+                    PurchasedBy = purchasedBy
+                };
+                personCards.Add(personCard);
+            }
         }
-
-        _context.PersonCards.AddRange(personCards);
+        _context.PersonCards.AddRange();
         await _context.SaveChangesAsync();
 
-        return Ok(new { imported = personCards.Count });
+        return Ok(new
+        {
+            Message = "Importação concluída",
+            Errors = errors
+        });
     }
 
-    private string[] ParseCsvLine(string line)
+
+
+    // ----- Helpers -----
+
+    private static int SafeInt(string s)
+    {
+        if (int.TryParse(s?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
+            return v;
+        return 0;
+    }
+
+    // Parser CSV simples que respeita aspas simples e duplas
+    private static string[] ParseCsvLine(string line)
     {
         var pattern = @"
-        (?!\s*$)                                      
-        \s*                                            
-        (?:                                            
-          '(?<val>[^'\\]*(?:\\.[^'\\]*)*)'           
-        | ""(?<val>[^""\\]*(?:\\.[^""\\]*)*)""       
-        | (?<val>[^,'\""]*)                           
-        )                                            
-        \s*                                            
-        (?:,|$)                                      
-    ";
+            (?!\s*$)
+            \s*
+            (?:
+              '(?<val>[^'\\]*(?:\\.[^'\\]*)*)'
+            | ""(?<val>[^""\\]*(?:\\.[^""\\]*)*)""
+            | (?<val>[^,'\""]*)
+            )
+            \s*
+            (?:,|$)
+        ";
         var matches = Regex.Matches(line, pattern, RegexOptions.IgnorePatternWhitespace);
         return matches.Cast<Match>().Select(m => m.Groups["val"].Value).ToArray();
     }
-
 
 }

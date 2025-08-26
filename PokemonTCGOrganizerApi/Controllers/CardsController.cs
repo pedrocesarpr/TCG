@@ -17,6 +17,11 @@ public class CardsController : ControllerBase
     [HttpPost("import-all-sets")]
     public async Task<IActionResult> ImportAllSets()
     {
+        // 🔹 1. Limpa todos os registros da tabela
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM PokemonCards");
+        await _context.Database.ExecuteSqlRawAsync("DELETE FROM sqlite_sequence WHERE name='PokemonCards'"); // reseta autoincremento
+
+        // 🔹 2. Chama o scraper para buscar os sets/cartas
         var cards = await _scraper.ScrapeScarletVioletSeriesAsync();
 
         var existingIds = _context.PokemonCards.Select(c => c.CardId + c.SetName).ToHashSet();
@@ -24,10 +29,11 @@ public class CardsController : ControllerBase
             .Where(c => !existingIds.Contains(c.CardId + c.SetName))
             .ToList();
 
-        _context.PokemonCards.AddRange(newCards);
+        // 🔹 3. Insere os novos registros
+        await _context.PokemonCards.AddRangeAsync(newCards);
         await _context.SaveChangesAsync();
 
-        return Ok(new { imported = newCards.Count });
+        return Ok(new { message = $"{cards.Count} cartas importadas com sucesso." });
     }
 
     [HttpPost]
@@ -112,14 +118,6 @@ public class CardsController : ControllerBase
 
         var result = query
             .Take(20)
-            .Select(c => new
-            {
-                c.Id,
-                c.CardId,
-                c.CardName,
-                c.SetName,
-                c.ImageUrl
-            })
             .ToList();
 
         return Ok(result);

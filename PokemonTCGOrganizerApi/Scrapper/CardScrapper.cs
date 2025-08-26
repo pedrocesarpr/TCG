@@ -30,6 +30,15 @@ public class CardScraper
             ?.Select(a => baseUrl + a.GetAttributeValue("href", ""))
             .Distinct()
             .ToList() ?? new();
+        
+        
+        var ppDiv = doc.GetElementbyId("play-pokemon-series");
+        if (ppDiv == null)
+            return allCards;
+        setLinks.AddRange(ppDiv.SelectNodes(".//a[contains(@href, '/sets/')]")
+            ?.Select(a => baseUrl + a.GetAttributeValue("href", ""))
+            .Distinct()
+            .ToList() ?? new());
 
         foreach (var setUrl in setLinks)
         {
@@ -42,7 +51,7 @@ public class CardScraper
                 var setNameNode = setDoc.GetElementbyId("card-search-result-title-set-like-name");//setDoc.DocumentNode.SelectSingleNode("//h1[contains(@class, 'page-title')]");
                 var setName = setNameNode?.InnerText.Trim() ?? "Unknown";
                 var setCodeNode = setDoc.GetElementbyId("card-search-result-title-set-code");
-                var setCode = setCodeNode?.InnerText.Trim() ?? "Unknown";               
+                var setCode = setCodeNode?.InnerText.Trim() ?? "PPS";               
                 var cardNodes = setDoc.DocumentNode.SelectNodes("//a[contains(@class, 'card-image-grid-item-link')]");
                 if (cardNodes == null) continue;
 
@@ -56,7 +65,7 @@ public class CardScraper
                     {
                         allCards.Add(new PokemonCard
                         {
-                            CardName = name,
+                            CardName = name.Replace("&#039;", "'"),
                             SetCode = setCode,
                             SetName = setName,
                             CardNumber = id.Split('/')[0],
