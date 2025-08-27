@@ -2,6 +2,7 @@ using PokemonTCGOrganizer.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -21,17 +22,29 @@ builder.Services.AddScoped<CardScraper>();
 
 var app = builder.Build();
 
+//  Configurar a porta do Render
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Urls.Add($"http://*:{port}");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+//  NÃO redirecionar para HTTPS no Render
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Healthcheck simples
+app.MapGet("/ping", () => Results.Ok(new { status = "pong" }));
 
 app.Run();
