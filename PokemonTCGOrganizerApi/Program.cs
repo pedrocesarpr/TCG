@@ -24,6 +24,7 @@ var app = builder.Build();
 
 //  Configurar a porta do Render
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 app.Urls.Add($"http://*:{port}");
 
 if (app.Environment.IsDevelopment())
